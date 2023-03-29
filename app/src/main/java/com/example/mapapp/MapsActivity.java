@@ -1,10 +1,18 @@
 package com.example.mapapp;
 
+import static android.content.ContentValues.TAG;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -13,9 +21,15 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MapStyleOptions;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.example.mapapp.databinding.ActivityMapsBinding;
+import com.google.android.gms.maps.model.PointOfInterest;
+
+import java.util.Locale;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -51,9 +65,27 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Add a marker in Sydney and move the camera
         LatLng vokasiUGM = new LatLng(-7.7750846, 110.372863);
         mMap.addMarker(new MarkerOptions().position(vokasiUGM).title("Marker in Vokasi UGM"));
+//        mMap.addMarker(new MarkerOptions().icon(BitmapDescriptorFactory.fromResource(R.drawable.icon)));
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(vokasiUGM, 15));
 
+
+        try {
+            // Customise the styling of the base map using a JSON object defined
+            // in a raw resource file.
+            boolean success = mMap.setMapStyle(
+                    MapStyleOptions.loadRawResourceStyle(
+                            MapsActivity.this, R.raw.style_json));
+
+            if (!success) {
+                Log.e(TAG, "Style parsing failed.");
+            }
+        } catch (Resources.NotFoundException e) {
+            Log.e(TAG, "Can't find style.", e);
+        }
+
         setMapOnClick(mMap);
+        setPoiClicked(mMap);
+        enableMyLocation();
     }
 
     @Override
@@ -86,8 +118,53 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         map.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
             public void onMapLongClick(@NonNull LatLng latLng) {
-                map.addMarker(new MarkerOptions().position(latLng));
+                String text = String.format(Locale.getDefault(),
+                        "Lat : %1$.5f, Long : %2$.5f",
+                        latLng.latitude,
+                        latLng.longitude);
+                map.addMarker(new MarkerOptions()
+                        .position(latLng)
+                        .snippet(text)
+                        .title("Dropped pin"));
             }
         });
+    }
+
+    private void setPoiClicked(final GoogleMap map){
+        map.setOnPoiClickListener(new GoogleMap.OnPoiClickListener() {
+            @Override
+            public void onPoiClick(@NonNull PointOfInterest pointOfInterest) {
+                Marker poiMarker = mMap.addMarker(new MarkerOptions()
+                        .position(pointOfInterest.latLng)
+                        .title(pointOfInterest.name));
+                poiMarker.showInfoWindow();
+            }
+        });
+    }
+
+    private void enableMyLocation(){
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+        == PackageManager.PERMISSION_GRANTED){
+            mMap.setMyLocationEnabled(true);
+        }
+
+        else{
+            ActivityCompat.requestPermissions(this, new String[]{
+                    Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode){
+            case 1:
+                if (grantResults.length>0
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                    enableMyLocation();
+                    break;
+                }
+        }
     }
 }
