@@ -65,7 +65,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Add a marker in Sydney and move the camera
         LatLng vokasiUGM = new LatLng(-7.7750846, 110.372863);
         mMap.addMarker(new MarkerOptions().position(vokasiUGM).title("Marker in Vokasi UGM")
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.icon)));
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.hengkermap)));
 //        mMap.addMarker(new MarkerOptions().icon(BitmapDescriptorFactory.fromResource(R.drawable.icon)));
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(vokasiUGM, 15));
 
@@ -126,7 +126,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 map.addMarker(new MarkerOptions()
                         .position(latLng)
                         .snippet(text)
-                        .title("Dropped pin"));
+                        .title("Dropped pin")
+                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.hengkermap)));
             }
         });
     }
